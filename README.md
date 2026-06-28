@@ -63,13 +63,13 @@ assets/
 Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dreamcanvas-ai.git
+git clone https://github.com/ayush08m/ImageGenerator-AI.git
 ```
 
 Move into the project
 
 ```bash
-cd dreamcanvas-ai
+cd AiImageGenerator
 ```
 
 Install dependencies
