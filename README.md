@@ -1,4 +1,4 @@
-# 🎨 DreamCanvas AI
+# 🎨 AI Image Generator
 
 An AI-powered image generation app built with **React Native**, **Expo SDK 54**, and **Gemini AI**. Users can enhance prompts with AI, generate stunning images, preview them, save generation history, and share creations.
 
