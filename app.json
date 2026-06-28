@@ -19,7 +19,16 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ],
+      "package": "com.ayush08.AiImageGenerator"
     },
     "web": {
       "output": "static",
@@ -27,6 +36,14 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow AI Image Generator to save images to your gallery.",
+          "savePhotosPermission": "Allow AI Image Generator to save images.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -43,6 +60,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3cd85640-ae6b-4b76-9bed-7db5b74562d0"
+      }
     }
   }
 }

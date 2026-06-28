@@ -1,98 +1,136 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Alert,
+} from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-
+import Header from "../../components/Header";
+import PromptInput from "../../components/PromptInput";
+import StyleSelector from "../../components/StyleSelector";
+import GenerateButton from "../../components/GenerateButton";
+import ImageCard from "../../components/ImageCard";
+import Loading from "../../components/Loading";
+import EmptyState from "../../components/EmptyState";
+import { improvePrompt } from "../../services/gemini";
+import { generateImage } from "../../services/ai";
+import { saveHistory } from "../../services/history";
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [prompt, setPrompt] = useState("");
+  const [style, setStyle] = useState("Realistic");
+  const [image, setImage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [improving, setImproving] = useState(false);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  async function handleImprovePrompt() {
+  if (!prompt.trim()) return;
+
+  try {
+    setImproving(true);
+
+    const improved = await improvePrompt(prompt);
+
+    setPrompt(improved);
+  } catch (error) {
+    console.log(error);
+    Alert.alert(
+      "Error",
+      "Unable to improve prompt."
+    );
+  } finally {
+    setImproving(false);
+  }
+}
+
+  async function handleGenerate() {
+    if (!prompt.trim()) {
+      Alert.alert("Prompt Required", "Please enter a prompt.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const finalPrompt = `${prompt}, ${style} style
+      Highly detailed
+      Ultra realistic
+      Professional Lighting
+      8K Resolution`;
+
+      const result = await generateImage(finalPrompt);
+      console.log(result.imageUrl);
+      setImage(result.imageUrl);
+      await saveHistory({
+  id: Date.now().toString(),
+  prompt,
+  style,
+  image: result.imageUrl,
+  createdAt: new Date().toISOString(),
+});
+    } catch (error) {
+      Alert.alert("Error", "Failed to generate image.");
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
+        <Header />
+
+        <PromptInput
+          value={prompt}
+          onChangeText={setPrompt}
+        />
+        <GenerateButton
+  title={
+    improving
+      ? "Improving..."
+      : "✨ Improve Prompt"
+  }
+  loading={improving}
+  onPress={handleImprovePrompt}
+/>
+
+        <StyleSelector
+          selectedStyle={style}
+          onSelect={setStyle}
+        />
+
+ <GenerateButton
+  title="Generate Image"
+  loading={loading}
+  onPress={handleGenerate}
+/>
+
+        {loading ? (
+          <Loading />
+        ) : image ? (
+          <ImageCard key={image} image={image} prompt={prompt}
+  style={style}/>
+        ) : (
+          <EmptyState />
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#0F172A",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+
+  content: {
+    padding: 20,
+    paddingTop: 30,
+    paddingBottom: 40,
   },
 });
